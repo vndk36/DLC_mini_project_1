@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[167]:
+# In[173]:
 
 
 # This is distributed under BSD 3-Clause license
@@ -88,7 +88,7 @@ def load(root, train = True, download = True, one_khz = False):
 def train_model(model, train_input, train_target):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr = 1e-3)
-    nb_epochs = 50
+    nb_epochs = 250
     mini_batch_size = 79
 
     for e in range(0, nb_epochs):
@@ -119,12 +119,12 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size):
             
 #################################################################
 
-model = nn.Sequential(nn.Linear(1400, 2000),nn.ReLU(),nn.Linear(2000, 2500),                      nn.ReLU(),nn.Linear(2500, 5000),nn.ReLU(),nn.Linear(5000, 2))
+model = nn.Sequential(nn.Conv2d(1, 32, kernel_size=5), nn.Linear(1400, 500),nn.ReLU(),nn.Linear(500, 2))
 
 
 
 
-# In[ ]:
+# In[174]:
 
 
 train_input, train_target = load("data",True, False)
@@ -144,7 +144,7 @@ import matplotlib.pyplot as plt
 #train_input.data
 
 
-# In[ ]:
+# In[175]:
 
 
 for p in model.parameters(): p.data.normal_(0, 0.01)
