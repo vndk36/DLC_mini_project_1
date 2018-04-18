@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[5]:
+# In[167]:
 
 
 # This is distributed under BSD 3-Clause license
@@ -11,6 +11,7 @@ import numpy
 import os
 import errno
 
+from torch import optim
 from torch.autograd import Variable
 from torch import nn
 from torch.nn import functional as F
@@ -68,7 +69,7 @@ def load(root, train = True, download = True, one_khz = False):
 
         input = dataset.narrow(1, 1, dataset.size(1) - 1)
         input = input.float().view(input.size(0), nb_electrodes, -1)
-        target = dataset.narrow(1, 0, 1).clone().view(-1).long()
+        target = dataset.narrow(1, 0, 1).clone().view(-1).long() #changer le type suivant le loss criterion
 
     else:
 
@@ -79,29 +80,30 @@ def load(root, train = True, download = True, one_khz = False):
         target = tensor_from_file(root, 'labels_data_set_iv.txt')
 
         input = input.float().view(input.size(0), nb_electrodes, -1)
-        target = target.view(-1).long()
+        target = target.view(-1).long() #changer le type suivant le loss criterion
 
     return input, target
 ######################################################################
 
-mini_batch_size = 100
-
 def train_model(model, train_input, train_target):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr = 1e-1)
-    nb_epochs = 250
+    optimizer = optim.SGD(model.parameters(), lr = 1e-3)
+    nb_epochs = 50
+    mini_batch_size = 79
 
     for e in range(0, nb_epochs):
         for b in range(0, train_input.size(0), mini_batch_size):
             output = model(train_input.narrow(0, b, mini_batch_size))
+            #F.softmax(output,dim=0)
             loss = criterion(output, train_target.narrow(0, b, mini_batch_size))
+            #print(loss)
             model.zero_grad()
             loss.backward()
             optimizer.step()
             
 #################################################################
 
-def compute_nb_errors(model, data_input, data_target):
+def compute_nb_errors(model, data_input, data_target, mini_batch_size):
 
     nb_data_errors = 0
 
@@ -117,31 +119,17 @@ def compute_nb_errors(model, data_input, data_target):
             
 #################################################################
 
-model = nn.Sequential(
-        nn.Linear(2, 4),
-        nn.ReLU(),
-        nn.Linear(4, 8),
-        nn.ReLU(),
-        nn.Linear(8, 16),
-        nn.ReLU(),
-        nn.Linear(16, 32),
-        nn.ReLU(),
-        nn.Linear(32, 64),
-        nn.ReLU(),
-        nn.Linear(64, 128),
-        nn.ReLU(),
-        nn.Linear(128, 2)
-    )
+model = nn.Sequential(nn.Linear(1400, 2000),nn.ReLU(),nn.Linear(2000, 2500),                      nn.ReLU(),nn.Linear(2500, 5000),nn.ReLU(),nn.Linear(5000, 2))
 
 
 
 
-# In[22]:
+# In[ ]:
 
 
 train_input, train_target = load("data",True, False)
 test_input, test_target = load("data",False, False)
-train_input, train_target, test_input, test_target = Variable(train_input), Variable(train_target), Variable(test_input), Variable(test_target)
+train_input, train_target, test_input, test_target = Variable(train_input.view(316,-1)), Variable(train_target), Variable(test_input.view(100,-1)), Variable(test_target)
 
 
 import matplotlib.pyplot as plt
@@ -149,14 +137,32 @@ import matplotlib.pyplot as plt
 # Plot one input to a visual plot to be able to see what is going on!
 # plt.plot([x], y, ....)
 
-plt.plot(range(0,50),train_input[4,4,:].data.numpy())
-plt.show()
+#plt.plot(range(0,1400),train_input[4,:].data.numpy())
+#plt.show()
 ######################################################################
 
+#train_input.data
 
 
 # In[ ]:
 
 
-# 
+for p in model.parameters(): p.data.normal_(0, 0.01)
+
+# test multiple prior init
+
+train_model(model, train_input, train_target)
+print(' train_error {:.02f}% test_error {:.02f}%'.format(
+            compute_nb_errors(model, train_input, train_target, 79) / train_input.size(0) * 100,
+            compute_nb_errors(model, test_input, test_target, 50) / test_input.size(0) * 100))
+
+
+# In[101]:
+
+
+output = model(train_input)
+criterion = nn.CrossEntropyLoss()
+output = F.softmax(output, dim=0)
+loss = criterion(output, train_target)
+output
 
