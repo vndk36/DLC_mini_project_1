@@ -1,0 +1,11 @@
+Convolution kernel:
+
+https://www.quora.com/In-convolutional-neural-networks-what-effect-does-the-size-e-g-3x3-5x5-7x7-of-the-convolution-kernel-have-on-the-architecture-of-the-convolutional-neural-networks
+
+MaxPool:
+
+https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks
+
+Feature Map:
+
+https://www.quora.com/What-is-meant-by-feature-maps-in-convolutional-neural-networks
