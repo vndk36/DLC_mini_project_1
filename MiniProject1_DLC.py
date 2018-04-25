@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[173]:
+# In[109]:
 
 
 # This is distributed under BSD 3-Clause license
@@ -88,8 +88,8 @@ def load(root, train = True, download = True, one_khz = False):
 def train_model(model, train_input, train_target):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr = 1e-3)
-    nb_epochs = 250
-    mini_batch_size = 79
+    nb_epochs =100
+    mini_batch_size = 50
 
     for e in range(0, nb_epochs):
         for b in range(0, train_input.size(0), mini_batch_size):
@@ -119,17 +119,47 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size):
             
 #################################################################
 
-model = nn.Sequential(nn.Conv2d(1, 32, kernel_size=5), nn.Linear(1400, 500),nn.ReLU(),nn.Linear(500, 2))
+class Net(nn.Module):
+    def __init__(self, nb_hidden):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv1d(28, 32, kernel_size=7)
+        self.conv2 = nn.Conv1d(32, 64, kernel_size=5)
+        self.fc1 = nn.Linear(64*6, nb_hidden)
+        #self.fc2 = nn.Linear(nb_hidden*2, nb_hidden)
+        self.fc3 = nn.Linear(nb_hidden, 2)
+
+    def forward(self, x):
+        x = F.relu(F.max_pool1d(self.conv1(x), kernel_size=2, stride=2))
+        x = F.relu(F.max_pool1d(self.conv2(x), kernel_size=3, stride=3))
+        x = F.relu(self.fc1(x.view(-1,64*6)))
+        #x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+    
+model = Net(200)
+
+#model = nn.Sequential(
+    #nn.Conv1d(28, 32, kernel_size=5), 
+    #nn.ReLU(),
+    #nn.Conv1d(56, 56, kernel_size=4, stride = 2),
+    #nn.ReLU(),
+    #nn.MaxPool1d(kernel_size = 5, stride = 3),
+    #nn.ReLU(),
+    #nn.Conv1d(56,56, kernel_size = 4, stride = 1),
+    #nn.ReLU(),
+    #nn.Linear(32*46,79),
+    #nn.ReLU(),
+    #nn.Linear(79, 2))
 
 
 
 
-# In[174]:
+# In[110]:
 
 
 train_input, train_target = load("data",True, False)
 test_input, test_target = load("data",False, False)
-train_input, train_target, test_input, test_target = Variable(train_input.view(316,-1)), Variable(train_target), Variable(test_input.view(100,-1)), Variable(test_target)
+train_input, train_target, test_input, test_target = Variable(train_input.narrow(0, 0,300)), Variable(train_target.narrow(0,0,300)), Variable(test_input), Variable(test_target)
 
 
 import matplotlib.pyplot as plt
@@ -137,32 +167,29 @@ import matplotlib.pyplot as plt
 # Plot one input to a visual plot to be able to see what is going on!
 # plt.plot([x], y, ....)
 
-#plt.plot(range(0,1400),train_input[4,:].data.numpy())
+#plt.plot(range(0,50),train_input[4,4,:].data.numpy())
 #plt.show()
 ######################################################################
 
-#train_input.data
+##train_input.data
 
 
-# In[175]:
+# In[113]:
 
 
 for p in model.parameters(): p.data.normal_(0, 0.01)
+
 
 # test multiple prior init
 
 train_model(model, train_input, train_target)
 print(' train_error {:.02f}% test_error {:.02f}%'.format(
-            compute_nb_errors(model, train_input, train_target, 79) / train_input.size(0) * 100,
+            compute_nb_errors(model, train_input, train_target, 20) / train_input.size(0) * 100,
             compute_nb_errors(model, test_input, test_target, 50) / test_input.size(0) * 100))
 
 
-# In[101]:
+# In[ ]:
 
 
-output = model(train_input)
-criterion = nn.CrossEntropyLoss()
-output = F.softmax(output, dim=0)
-loss = criterion(output, train_target)
-output
+
 
