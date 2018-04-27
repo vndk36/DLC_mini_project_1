@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[55]:
+# In[52]:
 
 
 # This is distributed under BSD 3-Clause license
@@ -88,7 +88,7 @@ def load(root, train = True, download = True, one_khz = False):
 def train_model(model, train_input, train_target):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr = 1e-2)
-    nb_epochs =100
+    nb_epochs =200
     mini_batch_size = 50
 
     for e in range(0, nb_epochs):
@@ -119,7 +119,7 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size):
             
 
 
-# In[56]:
+# In[53]:
 
 
 #################################################################
@@ -127,16 +127,18 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size):
 class Net(nn.Module):
     def __init__(self, nb_hidden):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv1d(28, 32, kernel_size=7)
-        self.conv2 = nn.Conv1d(32, 64, kernel_size=5)
-        self.fc1 = nn.Linear(64*6, nb_hidden)
+        self.conv1 = nn.Conv1d(28, 32, kernel_size=3)
+        self.conv2 = nn.Conv1d(32, 32, kernel_size=3)
+        #self.conv3 = nn.Conv1d(32, 32, kernel_size=3)
+        self.fc1 = nn.Linear(32*11, nb_hidden)
         #self.fc2 = nn.Linear(nb_hidden*2, nb_hidden)
         self.fc3 = nn.Linear(nb_hidden, 2)
 
     def forward(self, x):
         x = F.relu(F.max_pool1d(self.conv1(x), kernel_size=2, stride=2))
-        x = F.relu(F.max_pool1d(self.conv2(x), kernel_size=3, stride=3))
-        x = F.relu(self.fc1(x.view(-1,64*6)))
+        x = F.relu(F.max_pool1d(self.conv2(x), kernel_size=2, stride=2))
+        #x = F.relu(F.max_pool1d(self.conv3(x), kernel_size=2, stride=2))
+        x = F.relu(self.fc1(x.view(-1,32*11)))
         #x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
@@ -159,7 +161,7 @@ model = Net(200)
 
 
 
-# In[57]:
+# In[54]:
 
 
 train_input, train_target = load("data",True, False)
@@ -179,7 +181,7 @@ import matplotlib.pyplot as plt
 ##train_input.data
 
 
-# In[58]:
+# In[55]:
 
 
 for p in model.parameters(): p.data.normal_(0, 0.01)
