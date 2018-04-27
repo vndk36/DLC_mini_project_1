@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[109]:
+# In[55]:
 
 
 # This is distributed under BSD 3-Clause license
@@ -87,7 +87,7 @@ def load(root, train = True, download = True, one_khz = False):
 
 def train_model(model, train_input, train_target):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr = 1e-3)
+    optimizer = optim.SGD(model.parameters(), lr = 1e-2)
     nb_epochs =100
     mini_batch_size = 50
 
@@ -96,10 +96,11 @@ def train_model(model, train_input, train_target):
             output = model(train_input.narrow(0, b, mini_batch_size))
             #F.softmax(output,dim=0)
             loss = criterion(output, train_target.narrow(0, b, mini_batch_size))
-            #print(loss)
             model.zero_grad()
             loss.backward()
             optimizer.step()
+            
+        print("The loss is :"+str(loss)+" for epoch :"+str(e))
             
 #################################################################
 
@@ -116,7 +117,11 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size):
 
     return nb_data_errors
             
-            
+
+
+# In[56]:
+
+
 #################################################################
 
 class Net(nn.Module):
@@ -154,7 +159,7 @@ model = Net(200)
 
 
 
-# In[110]:
+# In[57]:
 
 
 train_input, train_target = load("data",True, False)
@@ -174,7 +179,7 @@ import matplotlib.pyplot as plt
 ##train_input.data
 
 
-# In[113]:
+# In[58]:
 
 
 for p in model.parameters(): p.data.normal_(0, 0.01)
