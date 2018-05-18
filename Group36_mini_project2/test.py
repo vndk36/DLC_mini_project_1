@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[130]:
-
-
 import math
 import torch
 from torch import FloatTensor
@@ -14,10 +8,8 @@ NAME_INDEX = 0
 DATA_INDEX = 1
 GRAD_INDEX = 2
 
-
-# # Data Generation
-
-# In[131]:
+########################################################################################################################
+# Data Generation
 
 
 def generate_disc_set(nb):
@@ -26,14 +18,14 @@ def generate_disc_set(nb):
     input = FloatTensor(nb, 2).uniform_(0, 1)
     
     target = torch.norm(input.sub(disk_center), 2, 1) < math.sqrt(1/(2*math.pi))
-    target = torch.eye(2).index_select(0, target.long())   # transform the 1-D target into a matrix of two 1-D vectors
-                                                           # for the computation of the loss and its gradient. (see Part 2.1)
-    return input, target.float()                           
+    # transform the 1-D target into a matrix of two 1-D vectors for the computation of the
+    # loss and its gradient. (see Part 2.1)
+    target = torch.eye(2).index_select(0, target.long())
 
+    return input, target.float()
 
-# # Parameter class
-
-# In[132]:
+########################################################################################################################
+# Parameter class
 
 
 class Parameter():
@@ -45,10 +37,7 @@ class Parameter():
         self.grad = gradient   # gradient of the parameter
 
 
-# In[133]:
-
-
-class Module ( Parameter ) :
+class Module(Parameter):
     # base module that the following class inherits, see Part 3.1
     
     def __init__(self):
@@ -56,17 +45,17 @@ class Module ( Parameter ) :
         self.name = 'Base Module'  # name of the module
         self.param = []            # contains all the parameters of the Module
         
-    def forward (self, * input) :
+    def forward(self, * input):
         # Computes the forward pass of the Module.
         # Need to be implemented in future class if one wants to use it.
         raise NotImplementedError
         
-    def backward (self , * gradwrtoutput) :
+    def backward(self, * gradwrtoutput):
         # Computes the backward pass of the Module for the backpropagation of the loss.
         # Need to be implemented in future class if one wants to use it.
         raise NotImplementedError
         
-    def init_parameters ( self ):
+    def init_parameters(self):
         # Initialize the proper parameters for the Module.
         # Need to be implemented in future class if one wants to use it.
         raise NotImplementedError
@@ -82,28 +71,25 @@ class Module ( Parameter ) :
             if parameter != []:
                 self.param.append(parameter)
                     
-    def zero_grad( self ):
+    def zero_grad(self):
         # Reset the gradient of the parameters to 0
         for i in range(len(self.param)):             # loop on the different Module initialized in the 'self' Module
             for j in range(len(self.param[i])):      # loop on the parameters of each Module
                 self.param[i][j][GRAD_INDEX][:] = 0
                     
-    def optimizer (self, lr = 1e-5):
+    def optimizer(self, lr=1e-5):
         # Optimization based on a Stochastic Gradient Descent
         # updates the parameters in regard of their gradient and the input learning rate
         for i in range(len(self.param)):             # loop on the different Module initialized in the 'self' Module
             for j in range(len(self.param[i])):      # loop on the parameters of each Module
                 self.param[i][j][DATA_INDEX][:] -= lr * self.param[i][j][GRAD_INDEX][:]     # see formula (1)
                 
-    def parameters ( self ):
+    def parameters(self):
         # returns the all parameters of the Module
         return self.param
 
 
-# In[134]:
-
-
-class MSEloss( Module ):
+class MSEloss(Module):
     # Compute the Mean Square Error between the given input and target, see Part 3.2
     # no parameters needed
     
@@ -118,10 +104,7 @@ class MSEloss( Module ):
         return 2*(input.sub(target))                # see formula (3)
 
 
-# In[135]:
-
-
-class ReLU( Module ):
+class ReLU(Module):
     # Activation functions: Rectified Linear Unit on each element of the input, see Part 3.3.1
     # no parameters needed
     
@@ -138,10 +121,7 @@ class ReLU( Module ):
         return input * dx
 
 
-# In[136]:
-
-
-class Tanh( Module ):
+class Tanh(Module):
     # Activation functions: Hyperbolic tangent of each element of the input, see Part 3.3.2
     # no parameters needed
     
@@ -156,10 +136,7 @@ class Tanh( Module ):
         return (1 - input.tanh().pow(2)) * dx       # see formula (7)
 
 
-# In[137]:
-
-
-class Linear( Module ):
+class Linear(Module):
     # Linear transformation with certain weights and bias, see Part 3.4 
     
     Linear_counter = 0 # counter of the number of Linear module created in order to name properly the parameters
@@ -204,10 +181,7 @@ class Linear( Module ):
         return dx
 
 
-# In[150]:
-
-
-class Sequential( Module ):
+class Sequential(Module):
     # Sequential container of Modules object, see Part 3.5
     # The order is given by the user when creating the object of class Sequential
     
@@ -244,10 +218,7 @@ class Sequential( Module ):
         return dx
 
 
-# In[151]:
-
-
-def train_model(model, criterion, train_input, train_target, mini_batch_size = 100, lr = 1e-5, nb_epochs = 250):
+def train_model(model, criterion, train_input, train_target, mini_batch_size=100, lr=1e-5, nb_epochs=250):
     # trains the given model 'nb_epochs' times and prints the loss for each iteration in the end
     
     sum_loss = FloatTensor(nb_epochs).zero_()                     # contains the loss after each iteration
@@ -272,9 +243,6 @@ def train_model(model, criterion, train_input, train_target, mini_batch_size = 1
     return sum_loss
 
 
-# In[152]:
-
-
 def compute_nb_errors(model, data_input, data_target, mini_batch_size = 100):
     # computes the number of datapoint wrongly classified by the model
     
@@ -283,18 +251,16 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size = 100):
     for b in range(0, data_input.size(0), mini_batch_size):
         
         output = model.forward(data_input.narrow(0, b, mini_batch_size))   
-        _, predicted_classes = torch.max(output, 1)                        # the predicted class is the column of the output 
-                                                                           # with the greater value 
-        _, target_class = torch.max(data_target, 1)                        # same goes for the target (the column with 1)
+        _, predicted_classes = torch.max(output, 1)                   # the predicted class is the column of the output
+                                                                      # with the greater value
+        _, target_class = torch.max(data_target, 1)                   # same goes for the target (the column with 1)
         
         for k in range(0, mini_batch_size): 
-            if (target_class[b + k] != predicted_classes[k]):                # compares the prediction with the target
-                total_nb_errors += 1                                       # increments when a point is wrongly classified
+            if (target_class[b + k] != predicted_classes[k]):         # compares the prediction with the target
+                total_nb_errors += 1                                  # increments when a point is wrongly classified
 
     return total_nb_errors
-
-
-# In[153]:
+########################################################################################################################
 
 
 # Main Function
@@ -303,7 +269,8 @@ def compute_nb_errors(model, data_input, data_target, mini_batch_size = 100):
 train_input, train_target = generate_disc_set(1000)
 test_input, test_target = generate_disc_set(1000)
 
-mean, std = train_input.mean(), train_input.std()     # normailzation of the data
+# Normailzation of the data
+mean, std = train_input.mean(), train_input.std()
 train_input.sub_(mean).div_(std)
 test_input.sub_(mean).div_(std);
 
@@ -314,27 +281,30 @@ learning_rate = 1e-3
 standard_deviation = 0.1
 hidden_layer = 25
 
-# initilization of the model and criterion
+# Initilization of the model and criterion
 model = Sequential(Linear(2, hidden_layer, standard_deviation), Tanh(), 
                    Linear(hidden_layer, hidden_layer, standard_deviation), ReLU(), 
                    Linear(hidden_layer, 2, standard_deviation))
 criterion = MSEloss()
 
-# training of the model
+# Training of the model
 sum_loss = train_model(model, criterion, train_input, train_target, mini_batch_size, learning_rate, nb_epochs)
 
-# computing of the number of error
+# Computing of the number of error
 nb_test_errors = compute_nb_errors(model, test_input, test_target, mini_batch_size)
 nb_train_errors = compute_nb_errors(model, train_input, train_target, mini_batch_size)
 
-# visualization
-print('\ntrain error: {:0.2f}% ({:d}/{:d})'.format((100 * nb_train_errors) / train_input.size(0),   # number of errors on test
+# Visualization
+# number of errors on test
+print('\ntrain error: {:0.2f}% ({:d}/{:d})'.format((100 * nb_train_errors) / train_input.size(0),
                                                       nb_train_errors, train_input.size(0)))
-print('test error: {:0.2f}% {:d}/{:d} \n'.format((100 * nb_test_errors) / test_input.size(0),      # number of errors on test
+# number of errors on test
+print('test error: {:0.2f}% {:d}/{:d} \n'.format((100 * nb_test_errors) / test_input.size(0),
                                                       nb_test_errors, test_input.size(0)))
 
 print('Plot of the loss:')
-plt.plot(range(nb_epochs), sum_loss.numpy())   # plots the loss at each iteration
+# plots the loss at each iteration
+plt.plot(range(nb_epochs), sum_loss.numpy())
 plt.xlabel('epochs n°')
 plt.ylabel('loss')
 plt.show()
